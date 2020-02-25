@@ -3,11 +3,15 @@ package org.reactnative.camera.tasks;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.media.ExifInterface;
 import android.util.Base64;
+import android.util.Log;
 
 import org.reactnative.camera.RNCameraViewHelper;
 import org.reactnative.camera.utils.RNFileUtils;
@@ -126,6 +130,42 @@ public class ResolveTakenPictureAsyncTask extends AsyncTask<Void, Void, Writable
                 File imageFile = new File(filePath);
                 String fileUri = Uri.fromFile(imageFile).toString();
                 response.putString("uri", fileUri);
+
+                if(mOptions.hasKey("baselineOffset") || mOptions.getDouble("baselineOffset") > 0) {
+                    Log.d("ReactNativeCamera", "baselineOffset : " + mOptions.getDouble("baselineOffset"));
+                    String sidelineColor = "#ffff0000", centrallineColor = "#ff00ff00";
+                    if(mOptions.hasKey("sidelineColor") && mOptions.getString("sidelineColor").charAt(0) == '#')
+                        sidelineColor = mOptions.getString("sidelineColor");
+                    if(mOptions.hasKey("centrallineColor") && mOptions.getString("centrallineColor").charAt(0) == '#')
+                        centrallineColor = mOptions.getString("centrallineColor");
+
+                    Log.d("ReactNativeCamera",  " sidelineColor :" +sidelineColor
+                            + " centrallineColor : " +centrallineColor );
+
+                    Bitmap copy = Bitmap.createBitmap(mBitmap.getWidth(), mBitmap.getHeight(), Bitmap.Config.ARGB_8888);  //很重要
+                    Canvas canvas = new Canvas(copy);
+                    Paint paint = new Paint();
+                    paint.setStrokeWidth(20);
+                    paint.setAntiAlias(true); //抗锯齿
+
+                    canvas.drawBitmap(mBitmap, new Matrix(), paint);  //在画布上画一个和bitmap一模一样的图
+
+                    int startX = (int)(mBitmap.getWidth() * mOptions.getDouble("baselineOffset"));
+
+                    paint.setColor(Color.parseColor(sidelineColor));
+                    canvas.drawLine(startX, 0, startX, mBitmap.getHeight(), paint);
+                    canvas.drawLine(mBitmap.getWidth() - startX, 0, mBitmap.getWidth() - startX, mBitmap.getHeight(), paint);
+
+                    paint.setColor(Color.parseColor(centrallineColor));
+                    canvas.drawLine(mBitmap.getWidth() / 2, 0, mBitmap.getWidth() / 2, mBitmap.getHeight(), paint);
+
+                    ByteArrayOutputStream imageStream2 = new ByteArrayOutputStream();
+                    copy.compress(Bitmap.CompressFormat.JPEG, getQuality(), imageStream2);
+                    filePath = writeStreamToFile(imageStream2);
+                    imageFile = new File(filePath);
+                    fileUri = Uri.fromFile(imageFile).toString();
+                    response.putString("uri2", fileUri);
+                }
             }
 
             // Write base64-encoded image to the response if requested
