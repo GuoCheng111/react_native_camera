@@ -131,7 +131,7 @@ public class ResolveTakenPictureAsyncTask extends AsyncTask<Void, Void, Writable
                 String fileUri = Uri.fromFile(imageFile).toString();
                 response.putString("uri", fileUri);
 
-                if(mOptions.hasKey("baselineOffset") || mOptions.getDouble("baselineOffset") > 0) {
+                if(mOptions.hasKey("baselineOffset") && mOptions.getDouble("baselineOffset") > 0) {
                     Log.d("ReactNativeCamera", "baselineOffset : " + mOptions.getDouble("baselineOffset"));
                     String sidelineColor = "#ffff0000", centrallineColor = "#ff00ff00";
                     if(mOptions.hasKey("sidelineColor") && mOptions.getString("sidelineColor").charAt(0) == '#')
